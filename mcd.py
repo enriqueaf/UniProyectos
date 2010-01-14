@@ -2,7 +2,7 @@
 import sys
 def mcd(x,y,q):
  r = x%y
- q.extend(str(x/y))
+ q.append(x/y)
  if r != 0:
   return mcd(y,r,q)
  else:
@@ -13,7 +13,7 @@ def Bezout(q):
  for i in [0,1]:
   for s in range(len(q)):
    t = x[i][1]
-   x[i][1] = x[i][0] - x[i][1]*int(q[s])
+   x[i][1] = x[i][0] - x[i][1]*q[s]
    x[i][0] = t
  return [x[0][0],x[1][0]]
 
@@ -23,7 +23,7 @@ if len(sys.argv) != 2:
   e = raw_input('>>> ')
 else:
   e = sys.argv[1]
-e = e.split(' ')
+e = e.split(',')
 i = mcd(int(e[0]),int(e[1]),[])
 print i[0]
 b = Bezout(i[1])

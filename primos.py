@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 #Defino la funcion
 import sys
+from math import sqrt
 def esPrimo(n):
   ## Preparo un bucle para los numeros de [2,n-1]
-  for i in range(2,n):
+  for i in range(2,(int(sqrt(n)+1))):
     if n%i == 0:
   #    print n, 'NO es primo'
       ## Si en algun momento se es cierta esta sentencia signfica no es primo
