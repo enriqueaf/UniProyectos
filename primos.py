@@ -11,16 +11,16 @@ def esPrimo(n):
       ## El return me sirve para terminar el bucle
       return False
   ## Si llega hasta aqui significa que ningún numero del bulce es divisro de n
-  print n, 'es primo'
   return True
 
-if len(sys.argv) != 2:
-  print 'Bienvenido al investigador de primos'
-  print '¿Hasta que numero?'
-  ## En e se guarda la entrada por teclado
-  e = int(raw_input('>>> '))
-else:
-  e = int(sys.argv[1])
+if __name__ == '__main__':
+  if len(sys.argv) != 2:
+    print 'Bienvenido al investigador de primos'
+    print '¿Hasta que numero?'
+    ## En e se guarda la entrada por teclado
+    e = int(raw_input('>>> '))
+  else:
+    e = int(sys.argv[1])
 
-for i in range(2,e+1):
+  for i in range(2,e+1):
     esPrimo(i)
