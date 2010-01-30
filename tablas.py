@@ -1,6 +1,7 @@
 import random
 from math import sqrt,log
 class Tabla:
+	'Interfaz para una tabla generada por el usuario.'
 	def __init__(self,n):
 		self._tabla = list(n)
 
@@ -15,6 +16,7 @@ class Tabla:
 
 
 class TablaAleatoria(Tabla):
+	'Generador aleatorio de tablas dado una Longitud y Valor Maximo.'
 	def __init__(self,x,y):
 		self._tabla = []
 		self._longitud = int(x)
@@ -47,7 +49,7 @@ class TablaAleatoria(Tabla):
 		return self._tabla
 
 class Operaciones(object):
-	" Genero tablas y saco datos sobre ellas "
+	'Conjunto de operaciones a realizar con una tabla'
 	def __init__(self,tabla):
 		self._tabla = tabla
 
