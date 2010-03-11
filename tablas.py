@@ -116,7 +116,7 @@ class Operaciones(object):
 
 	def EstaOrdenada(self,reverse = False):
 		for i in range(self._tabla.VerLongitud()-1):
-			if (self._tabla.VerTabla()[i] < self._tabla.VerTabla()[i+1]) == reverse:
+			if (self._tabla.VerTabla()[i] <= self._tabla.VerTabla()[i+1]) == reverse:
 				return False
 		return True
 	def _PDDos(self,n):
