@@ -76,6 +76,7 @@ class Aorcado:
 		#Mejor opción de diseño con while??
 		if self.__Conseguido == self.__Palabra:
 			self.__GlobalAnuncio(['FIN',self.__Jugador[self.__Turno]])
+			log('Gano el jugador '+self.__Jugador[self.__Turno].VerNombre())
 		else:
 			jugador = self.__Jugador[self.__Turno]
 			letra = jugador.Turno() 

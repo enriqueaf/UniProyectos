@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import socket
 conseguido = []
 s = socket.socket()
@@ -14,6 +15,7 @@ for i in inc:
 		conseguido.append('_')
 	conseguido.append(' ')
 print 
+err = [' ','Sólo 1 letra','Letra ya introducida']
 while True:
 	recibido = s.recv(1024)
 	print "Recibido:", recibido
@@ -23,12 +25,24 @@ while True:
 		s.send(mensaje)
 	elif recibido[0] == 'LETRA':
 		nume = recibido[2].split(';')
-		for i in nume:
-			conseguido[int(i)]=recibido[1]
-		print conseguido
+		if nume[0] == '-1':
+			print 'La letra:',recibido[1],'no exta'
+		else: 
+			for i in nume:
+				conseguido[int(i)]=recibido[1]
+			T = ''
+			for i in conseguido:
+				T +=i
+			print T
 		s.send('OK')
 
-
+	elif recibido[0] == 'ERROR':
+		print err[int(recibido[1])]
+		s.send('OK')
+	elif recibido[0] == 'FIN':
+		print 'GANO',recibido[1]
+		s.send('OK')
+		break
 	else: 
 		s.send('OK')
 

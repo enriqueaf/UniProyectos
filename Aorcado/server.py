@@ -8,13 +8,20 @@ class JugadorC(Aorcado.Jugador):
 		self.__Conexion = conex
 		juego.NuevoJugador(self)
 		print conex
+	def Error(self,n):
+		self.__Conexion[0].send('ERROR,'+str(n))
+		self.__Cheq()
 	def Anuncio(self,n):
 		an = ''
-		print 'Enviando',n
-		for i in n:
-			an += str(i)+','
-		print an[:-1]
-		self.__Conexion[0].send(an[:-1])
+		if n[0] == 'FIN':
+			T = n[1].VerNombre()
+			an = 'FIN,'+T
+		else:
+			for i in n:
+				an += str(i)+','
+			an = an[:-1]
+			print 'Enviando',an
+		self.__Conexion[0].send(an)
 		self.__Cheq()
 
 	def __Cheq(self):
@@ -40,7 +47,9 @@ class JugadorC(Aorcado.Jugador):
 		self.__Conexion[0].send('TURNO')
 		self.__Cheq()
 		self.__Conexion[0].send('DI')
-		return self.__Conexion[0].recv(1024)
+		try: a = self.__Conexion[0].recv(1024)
+		except: self.__Juego.BorrarJugador(self)
+		return a
 
 s = socket.socket()
 s.bind(("localhost", 9999))
