@@ -63,6 +63,7 @@ class Aorcado:
 
 	def IniciarJuego(self):
 		if self.__Estado == 1: raise AorcadoFallo('El Juego ya está empeazado')
+		if len(self.__Jugador) == 0: raise AorcadoFallo('No hay usuario inscritos')
 		self.__Estado = 1
 		log('Iniciando el Juego con: ')
 		for i in self.__Jugador: 
@@ -83,7 +84,6 @@ class Aorcado:
 			log('Juega el jugador '+jugador.VerNombre()+' Con letra: '+str(letra))
 			if letra == '-1': 
 				self.CambiarTurno()
-				self.__Jugar()
 			elif len(letra) != 1:
 				log('InputError 1')
 				self.__Jugador[self.__Turno].Error(1)
@@ -125,6 +125,7 @@ class Aorcado:
 		self.__Turno = (self.__Turno + 1) % len(self.__Jugador)
 		self.__GlobalAnuncio(['CTURNO',self.__Jugador[self.__Turno]])
 		log('Cambiando turno a '+str(self.__Turno))
+		self.__Jugar()
 	
 	
 	def BorrarJugador(self,jugador):
@@ -135,6 +136,7 @@ class Aorcado:
 		log('Borrado del juego al jugador: '+jugador.VerNombre())
 		if b < self.__Turno:
 			self.__Turno = self.__Turno - 1
+		if len(self.__Jugador) == 0: raise AorcadoFallo('No ha jugadores conectados')
 
 
 	def ChequearEstado(self,AComprobar = None):
@@ -154,6 +156,7 @@ class Aorcado:
 		try: Palabra1.remove(' ')
 		except: log('No espacios')
 		for i in Palabra1:
+			log('Letras '+i)
 			self.__Palabra[i] = []
 			while Palabra2.count(i) != 0:
 				self.__Palabra[i].append(Palabra2.index(i))
@@ -162,8 +165,9 @@ class Aorcado:
 		Pa = Palabra.split(' ')
 		self.__Incognitas = ''
 		for i in Pa:
-			self.__Incognitas += str(len(i))
-		log('Incognitas '+self.__Incognitas)	
+			self.__Incognitas += str(len(i))+';'
+		self.__Incognitas = self.__Incognitas[:-1]
+		log('Incognitas '+self.__Incognitas)
 
 	
 	def VerConseguido(self):

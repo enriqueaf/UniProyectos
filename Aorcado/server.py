@@ -29,10 +29,11 @@ class JugadorC(Aorcado.Jugador):
 		#r = self.__Conexion[0].recv(1024)
 		try: r = self.__Conexion[0].recv(1024)
 		except: r = '-1'
-		self.__TimeO()
+		self.__Conexion[0].settimeout(10)
 		if r.upper() != 'OK':
 			self.__Conexion[0].close()
 			self.__Juego.BorrarJugador(self)
+		else: self.__Conexion[0].settimeout(60)
 	def __TimeO(self):
 		if self.__Time:
 			self.__Conexion[0].settimeout(10)
@@ -48,20 +49,24 @@ class JugadorC(Aorcado.Jugador):
 		self.__Cheq()
 		self.__Conexion[0].send('DI')
 		try: a = self.__Conexion[0].recv(1024)
-		except: self.__Juego.BorrarJugador(self)
+		except: 
+			self.__Juego.CambiarTurno()
 		return a
 
 s = socket.socket()
 s.bind(("localhost", 9999))
 s.listen(1)
-s.settimeout(5)
-Juego = Aorcado.Aorcado('ERES UN CAPULLO','¿¿COMO ERES??')
+s.settimeout(80)
+Juego = Aorcado.Aorcado('SOYS TODOS UNOS ESTUPIDOS','¿¿COMO ERES??')
 while True:
 	try: sc, addr = s.accept()
 	except: break
+	print 'Nuevo Usuario conectado',addr
 	nombre = sc.recv(1024)
 	JugadorC(nombre,Juego,[sc,addr])
-Juego.IniciarJuego()
+
+try: Juego.IniciarJuego()
+except: print 'Intento de empezar pero no hay jugadores'
 	
 
 
