@@ -14,6 +14,8 @@ Se construiran dos nuevos tipos: Postion and Move
 Después estás serán implementadas de forma que sea sencillo poder crear un caballo, un alfil o lo quesea, situando la parte pensante dentro de la clases tipo jugador.
 La clase Tablero, se encagara de manejar las piezas y movimientos, verificando su valided.
 '''
+LETRAS = ['A','B','C','D','E','F','G','H']
+def convert_letter_to_number(a):
 
 class AjedrezError(Exception):
     '''
@@ -276,7 +278,7 @@ class Tablero(Juego):
 
     def _check_finish_clase(self):
         try:
-            if self.get_position(self.get_piece(type='REY')[0]).Y == 0:
+            if self.get_position(self.get_piece(type='REY')[0]).Y == 7:
                 raise AjedrezError()
         except AjedrezError:
             raise JuegoFinalizar(self._turn)
@@ -396,15 +398,18 @@ class Tablero(Juego):
         raise NextTurn
 
     def draw(self):
+        '''
+        TODO: Crear Clase a parte
+        '''
         print ' ',
         for x in range(self._misures[0]):
-            print x,
+            print LETRAS[x],
         print 
-        for y in range(self._misures[0]):
-            print y,
-            for x in range(self._misures[1]):
-                if not self.is_free(Position(x,y)):
-                    print str(self.get_piece(position=Position(x,y))),
+        for y in range(self._misures[1]):
+            print self._misures[0] - y,
+            for x in range(self._misures[0]):
+                if not self.is_free(Position(x,self._misures[0] - y -1)):
+                    print str(self.get_piece(position=Position(x,self._misures[0] - y -1))),
                 elif (x+y)%2 == 0:
                     print ' ',
                 else:
@@ -448,16 +453,21 @@ class Robot(Player):
         print self.Name,'Tu turno'
         while True:
             a = raw_input('>>> ')
-            c = a.split(';')
+            c = a.split(' ')
+            for e in range(len(c)):
+                for i in range(len(LETRAS)):
+                    if LETRAS[i] == c[e][0].upper():
+                        c[e] = str(i)+c[e][1]
+                        break
             self.log.wrt(str(c))
             try:
-                return [Position(c[0].split(',')[0],c[0].split(',')[1]),Position(c[1].split(',')[0],c[1].split(',')[1])]
-            except: print "Ponga las coordenadas del tipo\n x,y;x',y'"
+                return [Position(c[0][0],int(c[0][1])-1),Position(c[1][0],int(c[1][1])-1)]
+            except: print "Ponga las coordenadas del tipo\n xL;x'L'"
 class HumanoClase(Player):
     def __init__(self,name):
         self.Name = str(name)
         self.log = logging('H:'+self.Name)
-        self.commands = ['x','w','d','a','z','c','e','q']
+        self.commands = ['w','x','d','a','q','e','c','z']
         self.CM = {}
         for i in range(len(self.commands)):
             self.CM[self.commands[i]] = Rey._moves[i]
@@ -484,11 +494,11 @@ def main():
     hum2 = Robot('2')
     table.add_player(hum)
     table.add_player(hum2)
-    table.add_piece(Rey(hum),Position(3,7))
-    table.add_piece(Caballo(hum2),Position(0,0))
-    table.add_piece(Caballo(hum2),Position(2,0))
-    table.add_piece(Caballo(hum2),Position(4,0))
-    table.add_piece(Caballo(hum2),Position(6,0))
+    table.add_piece(Rey(hum),Position(3,0))
+    table.add_piece(Caballo(hum2),Position(0,7))
+    table.add_piece(Caballo(hum2),Position(2,7))
+    table.add_piece(Caballo(hum2),Position(4,7))
+    table.add_piece(Caballo(hum2),Position(6,7))
     table.start_game()
 
 
