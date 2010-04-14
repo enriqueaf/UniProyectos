@@ -6,7 +6,30 @@
 #######################################################
 import random
 from math import sqrt
-from logging import *
+'''
+Utils
+'''  
+class LogError(Exception):
+    pass
+
+class logging:
+    LOG_LEVELS={'INFO':0,'DEBUG':1}
+    _LOG_LEVEL=0
+    def __init__(self,module):
+        self.module = module
+    @staticmethod
+    def set_log_level(level):
+        try:
+            logging._LOG_LEVEL = logging.LOG_LEVELS[level]
+            return True
+        except:
+            raise LogError('Level no suported')
+    @staticmethod
+    def get_log_level():
+        return Login._LOG_LEVEL
+    def wrt(self,msg,level='INFO'):
+        if logging._LOG_LEVEL >= logging.LOG_LEVELS[level]: 
+                print '[',self.module,']',msg
 '''
 TODO: Implementar un buen sistema de logging, con el paquete logging de python.
 
@@ -101,10 +124,7 @@ class Move(object):
     def __str__(self):
         return 'X:'+str(self.X)+' Y:'+str(self.Y)
     def __len__(self):
-        print self
-        a = sqrt((self.X**2)+(self.Y**2))
-        print a
-        return a
+        return sqrt((self.X**2)+(self.Y**2))
 
     def __add__(self,other):
         if type(other) == Move:
@@ -218,10 +238,10 @@ class Juego:
                 self._status = 'FINISH'
                 #Modificar
                 self._winner = self._turn
-                print 'FIN'
+                print 'FIN','GANÓ','>>',self._players[self._winner].get_name(),'<<'
                 break
-            except JuegoError:
-                print 'ex'
+            except JuegoError as ex:
+                print ex
 
 
             
@@ -288,6 +308,7 @@ class Tablero(Juego):
         try:
             if self.get_position(self.get_piece(type='REY')[0]).Y == 7:
                 raise AjedrezError()
+            self.get_piece(type='CABALLO')
         except AjedrezError:
             self.draw()
             raise JuegoFinalizar(self._turn)
@@ -316,8 +337,8 @@ class Tablero(Juego):
                         positions.append(e)
                         if can_eat(position,e):
                             raise AjedrezError('Ya no mais')
-            except AjedrezError:
-                self.log.wrt('ex')
+            except AjedrezError as ex:
+                self.log.wrt(ex)
                 pass
         self.log.wrt(str(positions))
         return positions
@@ -380,8 +401,8 @@ class Tablero(Juego):
             self.is_in_tablero(positionF)
             self._pieces[positionS].is_move_valid(positionS,positionF)
             self.can_eat(positionS,positionF)
-        except AjedrezError:
-            raise AjedrezError('Movimiento no posible ' +str('ex'))
+        except AjedrezError as ex:
+            raise AjedrezError('Movimiento no posible ' +str(ex))
     
     def _eat(self,positionS,positionF):
         if self.can_eat(positionS,positionF):
@@ -397,7 +418,7 @@ class Tablero(Juego):
             if not positionF in self.possible_moves_of(positionS):
                 raise AjedrezError('No es un movimiento valido')
         except AjedrezError:
-            raise JuegoError('ERROR ----------> '+str('ex'))
+            raise JuegoError('ERROR ----------> '+str(ex))
         
         self.log.wrt(self.get_turn())
         
@@ -412,10 +433,6 @@ class Tablero(Juego):
         '''
         TODO: Crear Clase a parte
         '''
-        print ' ',
-        for x in range(self._misures[0]):
-            print LETRAS[x],
-        print 
         for y in range(self._misures[1]):
             print self._misures[0] - y,
             for x in range(self._misures[0]):
@@ -426,6 +443,10 @@ class Tablero(Juego):
                 else:
                     print '#',
             print
+        print ' ',
+        for x in range(self._misures[0]):
+            print LETRAS[x],
+        print 
 
     
 
@@ -441,7 +462,7 @@ class Caballo(Piece):
 class Rey(Piece):
     _type = 'REY'
     _moves = [Move(0,1),Move(0,-1),Move(1,0),Move(-1,0),Move(-1,1),Move(1,1),Move(1,-1),Move(-1,-1)]
-    _repr = 'R'
+    _repr = 'K'
 class Reina(Piece):
     _type = 'REINA'
     _moves = [Vector(1,0),Vector(0,-1),Vector(1,0),Vector(-1,0),Vector(-1,1),Vector(1,1),Vector(1,-1),Vector(-1,-1)]
@@ -473,61 +494,62 @@ class Alfil(Piece):
     pass
 
 class Robot(Player,object):
+    
     def __init__(self,name):
         self.log = logging('R:'+str(name))
         self.Name = str(name)
+    
     def __repr__(self):
         return 'Robot'
-
-
+    
     def get_turn(self):
         print self.Name,'Tu turno'
         while True:
-            jugadas = [self._comer_si_puede(),self._alejar_peligro()]
+            jugadas = [self._comer_si_puede(),self._alejar_peligro(),self._mover_lejano()]
             for i in jugadas:
-                if i:return i
-            return self._mover_lejano()
+                if i:
+                    self.log.wrt(i)
+                    return i
+            
+    
     def _alejar_peligro(self):
-        pieces = self._game.get_piece(type = 'CABALLO')
-        rey = self._game.get_position(self._game.get_piece(type= 'REY')[0])
         piece = False
-        for i in pieces:
-            if len(self._game.get_position(i)-rey)<=sqrt(2):
+        for i in self.caballos:
+            if len(self._game.get_position(i)-self.rey)<=sqrt(2):
                 piece = i
                 break
         if not piece:return False
         move = self._posicion_cercana(piece)
         return [self._game.get_position(piece),move]
+    
     def _posicion_cercana(self,piece):
-        rey = self._game.get_position(self._game.get_piece(type='REY')[0])
         moves = self._game.possible_moves_of(self._game.get_position(piece))
+        move = moves[0]
         dis = 5555555555555555555555555555
         for i in moves:
-            if dis > len(i-rey)>sqrt(2):
-                move,dis = i,len(i-rey)
+            if dis > len(i-self.rey)>sqrt(8):
+                move,dis = i,len(i-self.rey)
         return move
 
     def _mover_lejano(self):
-        pieces = self._game.get_piece(type='CABALLO')
-        rey = self._game.get_position(self._game.get_piece(type='REY')[0])
         self.log.wrt('Moviendo el que este mas lejos')
         dis = 0
-        for i in pieces:
-            f = len(self._game.get_position(i)-rey)
+        for i in self.caballos:
+            f = len(self._game.get_position(i)-self.rey)
             if f > dis:
                 piece,dis = i,f
         move = self._posicion_cercana(piece)
         return [self._game.get_position(piece),move]
+    
     def _comer_si_puede(self):
-        pieces = self._game.get_piece(type='CABALLO')
-        self.log.wrt(pieces)
-        for i in pieces:
+        for i in self.caballos:
             position = self._game.get_position(i)
             moves = self._game.possible_moves_of(position)
             for a in moves:
                 if self._game.can_eat(position,a):
                     return [position,a]
         return False
+    
     def _aleatorio(self):
         pieces = self.caballos
         rand = random.randrange(len(pieces))
@@ -536,13 +558,18 @@ class Robot(Player,object):
         rand2 = random.randrange(len(positions))
         self.log.wrt(str(rand2)+' '+str(positions))
         pF = positions[rand2]
-        print position,'->',pF
         return [position,pF]
+
+    def get_rey(self):
+        return self._game.get_position(self._game.get_piece(type='REY')[0])
     def get_caballos(self):
         return self._game.get_piece(type='CABALLO')
     def noset(self,val):
         raise AjedrezError('No se puede asignar valores a caballos')
+    
     caballos = property(get_caballos,noset)
+    rey = property(get_rey,noset)
+
 class HumanoClase(Player):
     def __init__(self,name):
         self.Name = str(name)
@@ -570,15 +597,15 @@ class HumanoClase(Player):
 
 def main():
     table = Tablero.juego_clase(8,8)
-    hum = HumanoClase('Enrique')
-    hum2 = Robot('2')
+    hum = HumanoClase('Humano')
+    hum2 = Robot('Robot')
     table.add_player(hum)
     table.add_player(hum2)
     table.add_piece(Rey(hum),Position(3,0))
     table.add_piece(Caballo(hum2),Position(0,7))
     table.add_piece(Caballo(hum2),Position(2,7))
-    table.add_piece(Caballo(hum2),Position(4,7))
-    table.add_piece(Caballo(hum2),Position(6,7))
+    table.add_piece(Caballo(hum2),Position(5,7))
+    table.add_piece(Caballo(hum2),Position(7,7))
     table.start_game()
 
 
