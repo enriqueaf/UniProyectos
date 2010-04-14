@@ -4,7 +4,8 @@
 # 04/2010
 # GPL
 #######################################################
-
+import random
+from math import sqrt
 from logging import *
 '''
 TODO: Implementar un buen sistema de logging, con el paquete logging de python.
@@ -16,7 +17,11 @@ La clase Tablero, se encagara de manejar las piezas y movimientos, verificando s
 '''
 LETRAS = ['A','B','C','D','E','F','G','H']
 def convert_letter_to_number(a):
-
+    for e in range(len(c)):
+        for i in range(len(LETRAS)):
+            if LETRAS[i] == c[e][0].upper():
+                c[e] = str(i)+c[e][1]
+                break
 class AjedrezError(Exception):
     '''
     Tipo de error que se ejecutara, cuando halla un problema dentro del propio tablero.
@@ -95,6 +100,12 @@ class Move(object):
         self.Y = int(y)
     def __str__(self):
         return 'X:'+str(self.X)+' Y:'+str(self.Y)
+    def __len__(self):
+        print self
+        a = sqrt((self.X**2)+(self.Y**2))
+        print a
+        return a
+
     def __add__(self,other):
         if type(other) == Move:
             return Move(self.X+other.X,self.Y+other.Y)
@@ -113,6 +124,8 @@ class Player:
     '''
     Interfaz para los jugadores
     '''
+    def get_situation(self):
+        return self._situation
     def get_turn(self):
         pass
     def lost_turn(self):
@@ -156,12 +169,7 @@ class Piece:
         '''
         Chequea que el movimiento sea valido.
         '''
-        move = positionF-positionS
-        self._log.wrt(move)
-        for i in self._moves:
-            if i == move:
-                return
-        raise AjedrezError('Movimiento de pieza no valido')
+        pass
     def __repr__(self):
         return self._type+str(self._owner)
     def __str__(self):
@@ -212,8 +220,8 @@ class Juego:
                 self._winner = self._turn
                 print 'FIN'
                 break
-            except JuegoError as ex:
-                print ex
+            except JuegoError:
+                print 'ex'
 
 
             
@@ -281,6 +289,7 @@ class Tablero(Juego):
             if self.get_position(self.get_piece(type='REY')[0]).Y == 7:
                 raise AjedrezError()
         except AjedrezError:
+            self.draw()
             raise JuegoFinalizar(self._turn)
            
             
@@ -305,8 +314,10 @@ class Tablero(Juego):
                     for e in position+i:
                         self._check_move_from_to(position,e)
                         positions.append(e)
-            except AjedrezError as ex:
-                self.log.wrt(ex)
+                        if can_eat(position,e):
+                            raise AjedrezError('Ya no mais')
+            except AjedrezError:
+                self.log.wrt('ex')
                 pass
         self.log.wrt(str(positions))
         return positions
@@ -369,8 +380,8 @@ class Tablero(Juego):
             self.is_in_tablero(positionF)
             self._pieces[positionS].is_move_valid(positionS,positionF)
             self.can_eat(positionS,positionF)
-        except AjedrezError as ex:
-            raise AjedrezError('Movimiento no posible ' +str(ex))
+        except AjedrezError:
+            raise AjedrezError('Movimiento no posible ' +str('ex'))
     
     def _eat(self,positionS,positionF):
         if self.can_eat(positionS,positionF):
@@ -385,8 +396,8 @@ class Tablero(Juego):
         try: 
             if not positionF in self.possible_moves_of(positionS):
                 raise AjedrezError('No es un movimiento valido')
-        except AjedrezError as ex:
-            raise JuegoError('ERROR ----------> '+str(ex))
+        except AjedrezError:
+            raise JuegoError('ERROR ----------> '+str('ex'))
         
         self.log.wrt(self.get_turn())
         
@@ -435,13 +446,33 @@ class Reina(Piece):
     _type = 'REINA'
     _moves = [Vector(1,0),Vector(0,-1),Vector(1,0),Vector(-1,0),Vector(-1,1),Vector(1,1),Vector(1,-1),Vector(-1,-1)]
 class Peon(Piece):
-    pass
+    _moves = [Move(0,1),Move(1,1),Move(1,-1),Move(0,-1),Move(-1,1),Move(-1,-1)]
+    _type = 'PEON'
+    def is_move_valid(self,positionS,positionF):
+        move = positionF-positionS
+        situation = self._tablero.get_piece(positionS).get_owner().get_situation()
+        if situation == 7:
+            a = -1
+        elif situation == 0:
+            a = 1
+        else:
+            raise AjedrezError('NO puede ser')
+        for i in self._moves:
+            if move == Move(0,a) and self._tablero.is_free(positionF):
+                return 
+            elif self._tablero.can_eat(positionF):
+                return
+        raise AjedrezError('YESss')
+
+            
+                
+        
 class Torre(Piece):
     pass
 class Alfil(Piece):
     pass
 
-class Robot(Player):
+class Robot(Player,object):
     def __init__(self,name):
         self.log = logging('R:'+str(name))
         self.Name = str(name)
@@ -452,17 +483,66 @@ class Robot(Player):
     def get_turn(self):
         print self.Name,'Tu turno'
         while True:
-            a = raw_input('>>> ')
-            c = a.split(' ')
-            for e in range(len(c)):
-                for i in range(len(LETRAS)):
-                    if LETRAS[i] == c[e][0].upper():
-                        c[e] = str(i)+c[e][1]
-                        break
-            self.log.wrt(str(c))
-            try:
-                return [Position(c[0][0],int(c[0][1])-1),Position(c[1][0],int(c[1][1])-1)]
-            except: print "Ponga las coordenadas del tipo\n xL;x'L'"
+            jugadas = [self._comer_si_puede(),self._alejar_peligro()]
+            for i in jugadas:
+                if i:return i
+            return self._mover_lejano()
+    def _alejar_peligro(self):
+        pieces = self._game.get_piece(type = 'CABALLO')
+        rey = self._game.get_position(self._game.get_piece(type= 'REY')[0])
+        piece = False
+        for i in pieces:
+            if len(self._game.get_position(i)-rey)<=sqrt(2):
+                piece = i
+                break
+        if not piece:return False
+        move = self._posicion_cercana(piece)
+        return [self._game.get_position(piece),move]
+    def _posicion_cercana(self,piece):
+        rey = self._game.get_position(self._game.get_piece(type='REY')[0])
+        moves = self._game.possible_moves_of(self._game.get_position(piece))
+        dis = 5555555555555555555555555555
+        for i in moves:
+            if dis > len(i-rey)>sqrt(2):
+                move,dis = i,len(i-rey)
+        return move
+
+    def _mover_lejano(self):
+        pieces = self._game.get_piece(type='CABALLO')
+        rey = self._game.get_position(self._game.get_piece(type='REY')[0])
+        self.log.wrt('Moviendo el que este mas lejos')
+        dis = 0
+        for i in pieces:
+            f = len(self._game.get_position(i)-rey)
+            if f > dis:
+                piece,dis = i,f
+        move = self._posicion_cercana(piece)
+        return [self._game.get_position(piece),move]
+    def _comer_si_puede(self):
+        pieces = self._game.get_piece(type='CABALLO')
+        self.log.wrt(pieces)
+        for i in pieces:
+            position = self._game.get_position(i)
+            moves = self._game.possible_moves_of(position)
+            for a in moves:
+                if self._game.can_eat(position,a):
+                    return [position,a]
+        return False
+    def _aleatorio(self):
+        pieces = self.caballos
+        rand = random.randrange(len(pieces))
+        position = self._game.get_position(pieces[rand])
+        positions = self._game.possible_moves_of(position)
+        rand2 = random.randrange(len(positions))
+        self.log.wrt(str(rand2)+' '+str(positions))
+        pF = positions[rand2]
+        print position,'->',pF
+        return [position,pF]
+    def get_caballos(self):
+        return self._game.get_piece(type='CABALLO')
+    def noset(self,val):
+        raise AjedrezError('No se puede asignar valores a caballos')
+    caballos = property(get_caballos,noset)
 class HumanoClase(Player):
     def __init__(self,name):
         self.Name = str(name)
