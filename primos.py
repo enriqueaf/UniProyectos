@@ -23,4 +23,4 @@ if __name__ == '__main__':
     e = int(sys.argv[1])
 
   for i in range(2,e+1):
-    esPrimo(i)
+	  print i,esPrimo(i)

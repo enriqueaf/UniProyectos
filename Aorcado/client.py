@@ -2,7 +2,7 @@
 import socket,signal
 conseguido = []
 s = socket.socket()
-s.connect(("localhost", 9999))
+s.connect(("192.168.1.8", 2869))
 a = raw_input('Nombre >> ')
 s.send(a)
 recibido = s.recv(1024)
